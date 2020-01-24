@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package underflow.common;
+import "google/protobuf/timestamp.proto";
+
+option go_package = "rpc";
+
+
+service UnderflowMasterService {
+    rpc Handshake (HandshakeRequest) returns (HandshakeResponse);
+    rpc Stream (stream MinionMessage) returns (stream MasterMessage);
+}
+
+service UnderflowMinionService {
+    rpc ReverseHandshake (ReverseHandshakeRequest) returns (ReverseHandshakeResponse);
+    rpc ReverseHandshakeAck (ReverseHandshakeAckRequest) returns (ReverseHandshakeAckResponse);
+    rpc Stream (stream MasterMessage) returns (stream MinionMessage);
+}
+
+message HandshakeRequest {
+    string minionID = 1;
+    string authToken = 2;
+    string schemaChecksum = 3;
+    repeated string supportedField = 4;
+}
+message HandshakeResponse {
+    bool ok = 1;
+}
+
+message ReverseHandshakeRequest {
+    string authToken = 1;
+    string schemaChecksum = 2;
+}
+message ReverseHandshakeResponse {
+    bool ok = 1;
+    string minionID = 2;
+    repeated string supportedField = 3;
+}
+
+message ReverseHandshakeAckRequest {
+    bool ok = 1;
+}
+message ReverseHandshakeAckResponse{}
+
+message MasterMessage {
+    oneof messageType {
+        CheckStatus checkStatus = 1;
+    }
+
+    message CheckStatus{}
+}
+
+message MinionMessage {
+    oneof messageType {
+        MinionStatus minionStatus = 1;
+    }
+
+    message MinionStatus {
+        google.protobuf.Timestamp timestamp = 1;
+        uint32 totalCapacity = 2;
+        uint64 busyCapacity = 3;
+    }
+}
